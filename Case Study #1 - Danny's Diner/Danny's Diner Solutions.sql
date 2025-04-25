@@ -1,4 +1,3 @@
-#What is the total amount each customer spent at the restaurant?
 select s.customer_id, sum(m.price) as totalSpent
 from sales s
 inner join menu m on
@@ -13,7 +12,7 @@ group by customer_id;
 #What was the first item from the menu purchased by each customer?
 with ranking as (
 	select s.customer_id, m.product_name,
-	row_number() over (partition by customer_id order by order_date asc) as rankingProducts
+	dense_rank() over (partition by customer_id order by order_date asc) as rankingProducts
 	from sales s
 	inner join menu m on 
 	s.product_id = m.product_id
@@ -43,7 +42,7 @@ with joinedTables as (
 )
 select * from (
 	select *,
-	row_number() over (partition by customer_id order by purchasedAmount desc) as purchaseRank
+	dense_rank() over (partition by customer_id order by purchasedAmount desc) as purchaseRank
 	from joinedTables
 ) as rankings
 where purchaseRank = 1;
@@ -54,7 +53,7 @@ with filteredTable as (
 	from sales s
 	join members me on
 	me.customer_id = s.customer_id 
-	where s.order_date >= me.join_date
+	where s.order_date > me.join_date
 ), ranking as(
 	select f.customer_id, f.order_date, f.product_id, 
 	rank() over (partition by customer_id order by order_date asc) as ordered,
@@ -73,7 +72,7 @@ with filteredTable as (
 	from sales s
 	join members me on
 	me.customer_id = s.customer_id 
-	where s.order_date <= me.join_date
+	where s.order_date < me.join_date
 )
 select f.customer_id, count(*) as totalItems, sum(m.price) amountSpent
 from filteredTable f
